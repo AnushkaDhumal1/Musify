@@ -1,12 +1,10 @@
 import axios from "axios";
 import { createContext, useEffect } from "react";
 import {useContext, useState } from "react";
-// import { AuthProvider } from './context/AuthContext';
-
 
 export const AuthContext = createContext();
 
-export const API_BASE_URL = "http://localhost:8080";
+export const API_BASE_URL = "https://musify-production-app-msdc.onrender.com";
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -30,6 +28,8 @@ export const AuthProvider = ({children}) => {
     if(storedToken && storedUser){
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
+
+      axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
     }
     setLoading(false);
 
@@ -61,7 +61,7 @@ export const AuthProvider = ({children}) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {email,password});
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {email,password,portal: "user"});
       if (response.status === 200) {
         setToken(response.data.token);
         setUser({ email: response.data.email, role: response.data.role });
@@ -89,7 +89,8 @@ export const AuthProvider = ({children}) => {
   }
 
   const getAuthHeader = () =>{
-    return token ? {Authorization:`Bearer ${token}`} : {}
+    // return token ? {Authorization:`Bearer ${token}`} : {};
+    return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
   const logout = () =>{
@@ -97,6 +98,8 @@ export const AuthProvider = ({children}) => {
     setUser(null);
     localStorage.removeItem("userToken");
     localStorage.removeItem("userData");
+
+    delete axios.defaults.headers.common['Authorization'];
   }
 
   const contextValue = {
